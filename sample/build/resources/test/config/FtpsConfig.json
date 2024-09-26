@@ -1,0 +1,18 @@
+{
+  "appURL":"string",
+  "appUserName":"string",
+  "appPassword": "string",
+  "globalRetryCount": "1x",
+  "globalRetryTimeout": "1s",
+  "globaBrowserTimeout":"2s",
+  "countForBrowserContextRefresh":1,
+  "doppleExtensionPath": "string",
+  "doppleDevExtensionPath":"type",
+
+  "delegateeType": "UIPATH",
+  "delegateeProfile": {
+    "rpaQueue": "test-queue",
+    "folder": "10",
+    "environmentId": "7"
+  }
+}
