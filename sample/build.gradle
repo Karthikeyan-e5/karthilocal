@@ -1,0 +1,117 @@
+buildscript {
+    repositories {
+        mavenCentral()
+
+    }
+    dependencies {
+        //Check for the latest version here: http://plugins.gradle.org/plugin/com.jfrog.artifactory
+        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4+"
+    }
+}
+
+plugins {
+    id 'java'
+    id "io.freefair.lombok" version "6.3.0"
+    id "com.jfrog.artifactory" version "4.29.0"
+}
+
+group = 'org.example'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    slf4jVersion = '1.7.25'
+    jerseyVersion = '2.27'
+    junitJupiterVersion  = '5.8.1'
+}
+dependencies {
+    implementation "org.slf4j:slf4j-api:${slf4jVersion}"
+    implementation "org.slf4j:slf4j-simple:${slf4jVersion}"
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+    implementation group: 'e5.common.utils', name: 'e5-common-utils', version: '1.0-20230822.131821-14'
+    implementation group: 'org.apache.kafka', name: 'kafka-clients', version: '3.7.0'
+    annotationProcessor group: 'platform.core', name: 'e5-platform-core', version: '1.3.5'
+    testImplementation group: 'org.mockito', name: 'mockito-inline', version: '3.10.0'
+    testImplementation group: 'io.cucumber', name: 'cucumber-java', version: '7.12.1'
+    testImplementation group: 'io.cucumber', name: 'cucumber-junit', version: '7.12.1'
+    implementation group: 'platform.core', name: 'e5-platform-core', version: "1.3.5"
+    implementation group: 'e5.functionblock', name: 'Wellsky', version: '1.0.49'
+   implementation group: 'e5.functionblock', name: 'Hchb', version: '0.0.1-alpha.60'
+    implementation group: 'e5.functionblock', name: 'SelectDataAPI', version: '0.0.1-alpha.19'
+}
+task createEnvVariables(type: JavaExec) {
+    main('com.e5.platform.core.config.YamltoEnv')
+    classpath = sourceSets.main.runtimeClasspath
+}
+compileJava.finalizedBy createEnvVariables
+
+
+
+
+
+
+task cucumber() {
+    dependsOn assemble, testClasses
+    doLast {
+        javaexec {
+            main = "io.cucumber.core.cli.Main"
+            classpath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output
+            args = [
+                    '--plugin', 'pretty',
+                    '--plugin', 'html:target/cucumber-report.html',
+                    'src/test/resources/features/test.feature']
+        }
+    }
+}
+configurations {
+    cucumberRuntime {
+        extendsFrom testImplementation
+    }
+}
+
+artifactory {
+    contextUrl = "${artifactory_contextUrl}"   //The base Artifactory URL if not overridden by the publisher/resolver
+    publish {
+        repository {
+            repoKey = 'automation-fabric-libs'
+            username = "${ARTIFACTORY_CREDS_USR}"
+            password = "${ARTIFACTORY_CREDS_PSW}"
+        }
+        defaults {
+            publications("mavenJava")
+        }
+    }
+    resolve {
+        repository {
+            repoKey = 'automation-fabric-libs'
+            username = "${ARTIFACTORY_CREDS_USR}"
+            password = "${ARTIFACTORY_CREDS_PSW}"
+            maven = true
+
+        }
+    }
+}
+
+allprojects {
+    apply plugin: "com.jfrog.artifactory"
+    apply plugin: 'maven-publish'
+}
+
+tasks.register('buildYourBlocks', JavaExec) {
+    group = 'execution'
+    def rootProjectName = rootProject.name
+    args(rootProjectName)
+    description = 'Runs Java program to create java class from json schema'
+    classpath = sourceSets.main.runtimeClasspath
+    standardInput = System.in
+    main = 'com.e5.platform.core.common.generateblock.BuildYourBlock'
+}
+
+test {
+    useJUnitPlatform()
+}
+

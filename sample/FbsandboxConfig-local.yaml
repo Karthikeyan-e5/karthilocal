@@ -1,0 +1,15 @@
+temporal:
+  serverUrl: "localhost:7233"
+  namespace: "default"
+kafka:
+  bootstrapServer: "localhost:9092"
+
+rpaGateway:
+  workerMappings:
+    - workerType: "Robotframework"
+      destinationEndpoint: "SampleAppOutbound"
+  endpoints:
+    - endpointID: "SampleAppOutbound"
+      type: "kafka"
+      config:
+        topic: "karthi_topic"
